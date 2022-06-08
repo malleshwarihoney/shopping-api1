@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <flow name="shopping-api-1-main">
+        <http:listener config-ref="shopping-api-1-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="shopping-api-1-config" />
+    </flow>
+    <flow name="put:\items:application\json:shopping-api-1-config">
+        <logger level="INFO" doc:name="StartLogger" doc:id="864746b4-3bfe-4c9f-9325-8baa2837d1a7" message="#[payload]" />
+        <flow-ref doc:name="upsert_items_implFlow" doc:id="a3821c3b-0305-483b-b1fa-e167aab66caf" name="upsert_items_implFlow" />
+        <logger level="INFO" doc:name="EndLogger" doc:id="35b8f5c0-8154-4bd6-9215-8dd18bba1548" message="flow name:put:\items:application\json:shopping-api-1-config.........EndLogger" />
+    </flow>
+    <flow name="delete:\items:shopping-api-1-config">
+        <logger level="INFO" doc:name="StartLogger" doc:id="19093ea9-b764-48ac-99a2-9acb153eb0cd" message="#[payload]" />
+        <flow-ref doc:name="delete_items_implFlow" doc:id="e0af447e-d000-49a9-bb1c-b5343619a937" name="delete_items_implFlow" />
+        <logger level="INFO" doc:name="EndLogger" doc:id="62698f62-b2d4-4a2e-840a-57f2db45b23b" message="flow name:put:\items:application\json:shopping-api-1-config.........EndLogger" />
+    </flow>
+    <flow name="get:\items:shopping-api-1-config">
+        <logger level="INFO" doc:name="StartLogger" doc:id="f9fc907a-e9f1-4f45-a515-7b47d08c22a2" message="#[payload]" />
+        <flow-ref doc:name="fetch_items_implFlow" doc:id="d9be2d3b-d1b2-4793-9f8a-1e6b73c0e036" name="fetch_items_implFlow" />
+        <logger level="INFO" doc:name="EndLogger" doc:id="0536c077-0d5f-42ab-88d2-dd7a7f571f6e" message="flow name:put:\items:application\json:shopping-api-1-config.........EndLogger" />
+    </flow>
+</mule>

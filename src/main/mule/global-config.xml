@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+    <http:listener-config name="shopping-api-1-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
+    </http:listener-config>
+    <apikit:config name="shopping-api-1-config" api="resource::8124e86c-7c7a-47d0-be3a-17b7c273ead1:shopping-api-1:1.0.2:raml:zip:shopping-api-1.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" disableValidations="true" />
+    <configuration doc:name="Global Error Configuration" doc:id="2cf645e3-173a-4ddc-86dc-b7e36525dd8e" defaultErrorHandler-ref="global-errorHandlingError_Handler" />
+    <salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="1fc2aefd-8c70-4e52-b089-c202160f92fe">
+        <salesforce:basic-connection username="${sf.username}" password="${secure::sf.password}" securityToken="${secure::sf.securitytoken}" />
+    </salesforce:sfdc-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="d5406678-a0b6-42dd-ad97-bb065d0d7f4a" file="mule-${env}.properties" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="41ebebdb-35e2-45b1-8a73-2ec1b920feaf" file="mule-${env}.properties" key="${enckey}" />
+</mule>

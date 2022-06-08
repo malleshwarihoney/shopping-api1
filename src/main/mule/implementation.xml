@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<flow name="fetch_items_implFlow" doc:id="4a6be373-9356-4d06-8662-2022ddf40181" >
+		<logger level="INFO" doc:name="Logger" doc:id="5388f10d-871d-4b00-8281-2e66519dc540" message="dummyLogger" />
+		<salesforce:query doc:name="Query" doc:id="8e4b12ec-7606-465c-9bab-3141e6547af8" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT Id, productID__c, Name__c, Pri__c, CatID__c, Brand__c, Date_created__c, Color__c FROM product__c]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="convert sf response to json" doc:id="f5be278d-17b9-46ee-952b-fd10c6bcc0f8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	(if (isEmpty (payload)){
+		"message":"No Records Available at Target system"
+		
+	}
+	else{
+		(payload map{
+			"ProductID":$.ProductID__c,
+			"Name":$.Name__c,
+			"Price":$.pri__c,
+			"CategoryID":$.CatID__c,
+			"Brand":$.Brand__c,
+			"Color":$.Color__c,
+			"Date created":$.Date_created__c
+			})
+	}
+	)
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="8f9ee642-b4cc-4d03-aa3d-cf972d4aa650" />
+	</flow>
+	<flow name="delete_items_implFlow" doc:id="5a2f5928-ec06-4a82-912b-17780c0ecb4d" >
+		<set-variable value="#[attributes.queryparams.ProductID]" doc:name="Set Variable" doc:id="aa4274e4-2481-48ea-a1f5-798937679f6b" variableName="ProductID"/>
+		<salesforce:query doc:name="Query" doc:id="a7c41860-8e12-40da-aa09-ca398d7aa67b" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT Id FROM product__c where productID__c==:productID]]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	productID: vars.ProductID
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<logger level="INFO" doc:name="Logger" doc:id="5702088f-ae46-4f1f-92a0-22e2678f7d6c" message="===============IDs=====#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="a32fe9a2-7a34-4975-b693-8be08e97264a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map $.Id]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:delete doc:name="Delete" doc:id="a9717ac9-b886-4a2d-b907-336a3e69871e" config-ref="Salesforce_Config">
+			<salesforce:ids ><![CDATA[#[[vars.ProductID]]]]></salesforce:ids>
+		</salesforce:delete>
+		<ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Message: "Record deleted successfully"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+	</flow>
+	<flow name="upsert_items_implFlow" doc:id="3606aefb-b274-4f33-9252-a1b04145996d" >
+		<logger level="INFO" doc:name="StartLogger" doc:id="461e41e9-91b8-424d-bc75-f91f4656e643" message="Before salesforce upsert operations====="/>
+		<ee:transform doc:id="46d085f1-7593-42ad-ab89-b3f42afea04f">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	productID__c: payload01.productID,
+	Name__c: payload01.Name,
+	Pri__c: payload01.Price,
+	CatID__c: payload01."Category ID" as Number,
+	Brand__c: payload01.Brand,
+	Color__c: payload01.Color,
+	Date_created__c: payload01."DateCreated" as Date
+}
+	
+    
+    ]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<salesforce:upsert objectType="product__c" externalIdFieldName="Name" doc:name="Upsert" doc:id="788cfb03-c26a-4f3d-adc9-be9691047e73" config-ref="Salesforce_Config"/>
+		<logger level="INFO" doc:name="salesforce Response payload" doc:id="d1e93b3f-7bfb-4fb0-ba7d-6d72e8c32d3d" message="After salesforce upsert operations=====The payload is;;;;;;;;;;;;;#[payload]" />
+		<choice doc:name="Choice" doc:id="83036e03-edff-4012-9f43-73657846faf6" >
+			<when expression="#[payload.successful==true]">
+				<ee:transform doc:name="setResponse payload for client" doc:id="05d2753c-5e49-41b9-a4cb-61178735f5e7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+   "Message":" The product record is created successfully"	
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="d82ae779-09c7-4e58-b97b-69ec022624f6" type="SF:FAILURE"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

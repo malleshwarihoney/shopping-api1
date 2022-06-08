@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="input_json" format="json">
+      <types:shape format="weave" example="examples/product details.json"><![CDATA[%dw 2.0
+
+type input_json = Array<{|  productID: Number {"typeId": "int"},   Name: String,   Price: Number {"typeId": "int"},   "Category ID": String,   Brand: String,   Color: String,   "Date Created": String|}> {"example": "[{\\\"productID\\\":7631,\\\"Name\\\":\\\"on cloud Nine Pillow\\\",\\\"Price\\\":30,\\\"Category ID\\\":\\\"298|511\\\",\\\"Brand\\\":\\\"FabDecor\\\",\\\"Color\\\":\\\"White\\\",\\\"Date Created\\\":\\\"2018-03-03 17:41:13\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#46d085f1-7593-42ad-ab89-b3f42afea04f">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="input_json"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
